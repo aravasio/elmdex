@@ -113,15 +113,28 @@ view model =
 
                     _ ->
                         div []
-                            [ select [ onInput SelectPokemon ] (List.map viewPokemon model.pokemon)
-                            , div [] [ text (Maybe.withDefault "" (Maybe.map (\url -> "Should fetch data from " ++ url) model.currentSelection)) ]
+                            [ select [ onInput SelectPokemon ]
+                                (List.map viewPokemon model.pokemon)
+                            , div []
+                                [ text
+                                    (Maybe.withDefault ""
+                                        (Maybe.map
+                                            (\url -> "Should fetch data from " ++ url)
+                                            model.currentSelection
+                                        )
+                                    )
+                                ]
                             ]
         ]
 
 
 viewPokemon : Pokemon -> Html Msg
 viewPokemon pokemon =
-    option [ value pokemon.name, onClick (SelectPokemon pokemon.name) ] [ text pokemon.name ]
+    option
+        [ value pokemon.name
+        , onClick (SelectPokemon pokemon.name)
+        ]
+        [ text pokemon.name ]
 
 
 
