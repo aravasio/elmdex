@@ -2,9 +2,9 @@ module Main exposing (..)
 
 import Basics
 import Browser
-import Html exposing (Html, button, div, text)
-import Html.Attributes exposing (class)
-import Html.Events exposing (onClick)
+import Html exposing (Html, button, div, li, option, select, text, ul)
+import Html.Attributes exposing (class, value)
+import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode exposing (Decoder, int, list, string)
 import Maybe
@@ -43,6 +43,7 @@ init url =
     ( { pokemon = []
       , error = Nothing
       , route = initialRoute
+      , currentSelection = Nothing
       }
     , Cmd.none
     )
@@ -73,6 +74,7 @@ type alias Model =
     { route : Route
     , pokemon : List Pokemon
     , error : Maybe String
+    , currentSelection : Maybe String
     }
 
 
@@ -105,13 +107,21 @@ view model =
                 div [ class "error-message" ] [ text errorMsg ]
 
             Nothing ->
-                div [ class "pokemon-list" ] (List.map viewPokemon model.pokemon)
+                case model.pokemon of
+                    [] ->
+                        text ""
+
+                    _ ->
+                        div []
+                            [ select [ onInput SelectPokemon ] (List.map viewPokemon model.pokemon)
+                            , div [] [ text (Maybe.withDefault "" (Maybe.map (\url -> "Should fetch data from " ++ url) model.currentSelection)) ]
+                            ]
         ]
 
 
 viewPokemon : Pokemon -> Html Msg
 viewPokemon pokemon =
-    div [] [ text ("Name: " ++ pokemon.name), text ("ID: " ++ pokemon.url) ]
+    option [ value pokemon.name, onClick (SelectPokemon pokemon.name) ] [ text pokemon.name ]
 
 
 
@@ -121,6 +131,7 @@ viewPokemon pokemon =
 type Msg
     = FetchPokemon
     | PokemonFetched (Result Http.Error (List Pokemon))
+    | SelectPokemon String
 
 
 errorToString : Http.Error -> String
@@ -153,6 +164,16 @@ update msg model =
 
         PokemonFetched (Err error) ->
             ( { model | error = Just (errorToString error) }, Cmd.none )
+
+        SelectPokemon name ->
+            let
+                selectedPokemonUrl =
+                    model.pokemon
+                        |> List.filter (\p -> p.name == name)
+                        |> List.head
+                        |> Maybe.andThen (\p -> Just p.url)
+            in
+            ( { model | currentSelection = selectedPokemonUrl }, Cmd.none )
 
 
 fetchPokemon : Cmd Msg
